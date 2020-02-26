@@ -12,7 +12,7 @@ output:
 # n gram tokenizer - 2 gram
 
 from nltk.util import ngrams
-list(ngrams(tokens, 2))
+two_grams = list(ngrams(tokens, 2))
 
 """
 Output:
@@ -27,8 +27,21 @@ Output:
  ('of', '26')]
 """
 
+[" ".join(x) for x in two_grams]
+"""
+['Tomas Jefferson',
+ 'Jefferson began',
+ 'began building',
+ 'building Monticello',
+ 'Monticello at',
+ 'at the',
+ 'the age',
+ 'age of',
+ 'of 26']
+"""
+
 # n gram tokenizer - 3 gram
-list(ngrams(tokens, 3))
+three_grams = list(ngrams(tokens, 3))
 """
 [('Tomas', 'Jefferson', 'began'),
  ('Jefferson', 'began', 'building'),
@@ -39,3 +52,5 @@ list(ngrams(tokens, 3))
  ('the', 'age', 'of'),
  ('age', 'of', '26')]
 """
+
+
