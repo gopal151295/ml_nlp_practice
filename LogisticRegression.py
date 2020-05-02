@@ -12,6 +12,7 @@ def loadDataSet():
 def sigmoid(inX):
     return 1.0 / (1 + np.exp(-inX))
 
+""" Calculate weights for all the dataset in one go -> repeat it for a few time """
 def gradAscent(dataMatIn, classLabels):
     dataMatrix = np.mat(dataMatIn)             #convert to NumPy matrix
     labelMat = np.mat(classLabels).transpose() #convert to NumPy matrix
@@ -53,6 +54,7 @@ weights = gradAscent(dataArr,labelMat)
 plotBestFit(weights.getA())
 """
 
+""" Calculate weights gradually by iterating over dataset row """
 def stocGradAscent0(dataMatrix, classLabels):
     m, n = np.shape(dataMatrix)
     alpha = 0.01
@@ -70,6 +72,7 @@ plotBestFit(weights)
 """
 
 """ make weights converge more quickly """
+""" Calculate weights gradually by iterating over dataset row -> repeat it for a few time"""
 def stocGradAscent1(dataMatrix, classLabels, numIter=150):
     m, n = np.shape(dataMatrix)
     weights = np.ones(n)   #initialize to all ones
