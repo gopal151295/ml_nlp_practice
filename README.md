@@ -63,7 +63,7 @@ Training -> doesn’t apply to knn
 ##### 2.2.3: Prepare: normalizing numeric values
 When dealing with values that lie in different ranges, it’s common to normalize them. Common ranges to normalize them to are 0 to 1 or -1 to 1. To scale everything from 0 to 1, you need to apply the following formula:
 
-$$ newValue = \frac{oldValue-min}{max-min} $$
+![newValue = \frac{oldValue-min}{max-min}](https://render.githubusercontent.com/render/math?math=newValue%20%3D%20%5Cfrac%7BoldValue-min%7D%7Bmax-min%7D)
 
 ##### 2.2.4: Test: Testing the classifier as a whole
 One common task in machine learning is evaluating an algorithm’s accuracy. One way you can use the existing data is to take some portion, say 90%, to train the classifier. Then you’ll take the remaining 10% to test the classifier and see how accurate it is.
