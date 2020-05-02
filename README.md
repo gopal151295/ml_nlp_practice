@@ -8,6 +8,7 @@
       - [1.8: Summary](#18-summary)
     - [2: Classifying with k-Nearest Neighbors](#2-classifying-with-k-nearest-neighbors)
       - [2.1: Classifying with distance measurements](#21-classifying-with-distance-measurements)
+        - [2.1.3: How to test a classifier](#213-how-to-test-a-classifier)
       - [2.2: Example: improving matches from a dating site with kNN](#22-example-improving-matches-from-a-dating-site-with-knn)
         - [2.2.3: Prepare: normalizing numeric values](#223-prepare-normalizing-numeric-values)
         - [2.2.4: Test: Testing the classifier as a whole](#224-test-testing-the-classifier-as-a-whole)
@@ -58,6 +59,13 @@ Training -> doesn’t apply to knn
 > Cons: Computationally expensive, requires a lot of memory
 > 
 > Works with: Numeric values, nominal values
+
+##### 2.1.3: How to test a classifier
+To test out a classifier, you start with some known data so you can hide the answer
+from the classifier and ask the classifier for its best guess. You can add up the number
+of times the classifier was wrong and divide it by the total number of tests you gave it.
+This will give you the error rate, which is a common measure to gauge how good a classifier is doing on a dataset. An error rate of 0 means you have a perfect classifier, and
+an error rate of 1.0 means the classifier is always wrong.
 
 #### 2.2: Example: improving matches from a dating site with kNN
 ##### 2.2.3: Prepare: normalizing numeric values
