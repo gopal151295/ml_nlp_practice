@@ -35,6 +35,13 @@
       - [5.3: Estimating horse fatalities from colic](#53-estimating-horse-fatalities-from-colic)
         - [5.3.1: Dealing with missing values in the data](#531-dealing-with-missing-values-in-the-data)
       - [5.4: Summary](#54-summary)
+    - [6: Support vector machines](#6-support-vector-machines)
+      - [6.1: Separating data with the maximum margin](#61-separating-data-with-the-maximum-margin)
+      - [6.2: Finding the maximum margin](#62-finding-the-maximum-margin)
+      - [6.3: Efficient optimization with the SMO algorithm](#63-efficient-optimization-with-the-smo-algorithm)
+        - [6.3.1: Platt’s SMO algorithm](#631-platts-smo-algorithm)
+        - [6.3.2: Solving small datasets with the simplified SMO](#632-solving-small-datasets-with-the-simplified-smo)
+      - [6.4: Speeding up optimization with the full Platt SMO](#64-speeding-up-optimization-with-the-full-platt-smo)
 
 # ML Notes
 
@@ -329,3 +336,77 @@ Logistic regression is finding best-fit parameters to a nonlinear function calle
 Gradient ascent can be simplified with stochastic gradient ascent. Stochastic gradient ascent can do as well as gradient ascent using far fewer computing resources. In addition, stochastic gradient ascent is an online algorithm; it can update what it has learned as new data comes in rather than reloading all of the data as in batch processing.
 
 One major problem in machine learning is how to deal with missing values in the data. There’s no blanket answer to this question. It really depends on what you’re doing with the data. There are a number of solutions, and each solution has its own advantages and disadvantages.
+
+### 6: Support vector machines
+
+Support vector machines are considered by some people to be the best stock classifier. By stock, I mean not modified. This means you can take the classifier in its basic form and run it on the data, and the results will have low error rates. Support vector machines make good decisions for data points that are outside the training set.
+
+There are many implementations of support vector machines but we’ll focus on one of the most popular implementations: the sequential minimal optimization (SMO) algorithm. After that, you’ll see how to use something called kernels to extend SVMs to a larger number of datasets. 
+
+You can use an SVM in almost any classification problem. One thing to note is that SVMs are binary classifiers. You’ll need to write a little more code to use an SVM on a problem with more than two classes.
+
+#### 6.1: Separating data with the maximum margin
+
+> **Support Vector Machine**
+> 
+> **Pros**: Low generalization error, computationally inexpensive, easy to interpret results
+> 
+> **Cons**: Sensitive to tuning parameters and kernel choice; natively only handles binary classification
+> 
+> **Works with**: Numeric values, nominal values
+
+A dataset is said to be linearly separable if it is possible to draw a line that can separate the red and green points from each other.
+
+The line used to separate the dataset is called a separating hyperplane. In our simple 2D plots, it’s just a line. But, if we have a dataset with three dimensions, we need a plane to separate the data; and if we have data with 1024 dimensions, we need something with 1023 dimensions to separate the data. What do you call something with 1023 dimensions? How about N-1 dimensions? It’s called a hyperplane. The hyperplane is our decision boundary. Everything on one side belongs to one class, and everything on the other side belongs to a different class.
+
+We’d like to find the point closest to the separating hyperplane and make sure this is as far away from the separating line as possible. This is known as margin.
+
+The points closest to the separating hyperplane are known as support vectors. Now that we know that we’re trying to maximize the distance from the separating line to the support vectors, we need to find a way to optimize this problem.
+
+#### 6.2: Finding the maximum margin
+
+Our separating hyperplane has the form
+![w^tx+b](https://render.githubusercontent.com/render/math?math=w%5Etx%2Bb)
+
+Distance of a point to separting plane is given by
+
+![\Large \frac {|w^tx+b|}{\|w\|}](https://render.githubusercontent.com/render/math?math=%5CLarge%20%5Cfrac%20%7B%7Cw%5Etx%2Bb%7C%7D%7B%5C%7Cw%5C%7C%7D)
+
+When we’re doing this and deciding where to place the separating line, this margin is calculated by
+label*(wTx+b)
+
+This is where the -1 and 1 class labels help out. If a point is far away from the separating plane on the positive side, then 
+![w^tx+b](https://render.githubusercontent.com/render/math?math=w%5Etx%2Bb) 
+will be a large positive number, and 
+![label*(w^tx+b)](https://render.githubusercontent.com/render/math?math=label*(w%5Etx%2Bb)) 
+will give us a large number. If it’s far from the negative side and has a negative label, 
+![label*(w^tx+b)](https://render.githubusercontent.com/render/math?math=label*(w%5Etx%2Bb)) 
+will also give us a large positive number.
+
+#### 6.3: Efficient optimization with the SMO algorithm
+
+##### 6.3.1: Platt’s SMO algorithm
+
+The SMO algorithm works to find a set of alphas and b. Once we have a set of alphas, we can easily compute our weights w and get the separating hyperplane.
+
+Here’s how the SMO algorithm works: it chooses two alphas to optimize on each cycle. Once a suitable pair of alphas is found, one is increased and one is decreased. To be suitable, a set of alphas must meet certain criteria. One criterion a pair must meet is that both of the alphas have to be outside their margin boundary. The second criterion is that the alphas aren’t already clamped or bounded.
+
+##### 6.3.2: Solving small datasets with the simplified SMO
+
+The simplification uses less code but takes longer at runtime. The outer loops of the Platt SMO algorithm determine the best alphas to optimize. We’ll skip that for this simplified version and select pairs of alphas by first going over every alpha in our dataset. Then, we’ll choose the second alpha randomly from the remaining alphas.
+
+*pseudo code: for for our first version of the SMO algorithm*
+```python
+create an alphas vector filled with 0s
+while the number of iterations is less than MaxIterations:
+  for every data vector in the dataset:
+    if the data vector can be optimized:
+      select another data vector at random
+      optimize the two vectors together
+      if the vectors can’t be optimized ➞ break
+  if no vectors were optimized ➞ increment the iteration count
+```
+
+#### 6.4: Speeding up optimization with the full Platt SMO
+
+The optimization portion where we change alphas and do all the algebra stays the same. The only difference is how we select which alpha to use in the optimization. 
