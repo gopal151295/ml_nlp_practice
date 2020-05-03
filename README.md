@@ -20,6 +20,12 @@
       - [3.3: Testing and storing the classifier](#33-testing-and-storing-the-classifier)
         - [3.3.2: Persisting the decision tree](#332-persisting-the-decision-tree)
       - [3.5: Summary](#35-summary)
+    - [4: Naïve Bayes](#4-na%c3%afve-bayes)
+      - [4.4: Document classification with naïve Bayes](#44-document-classification-with-na%c3%afve-bayes)
+      - [4.5: Classifying text with Python](#45-classifying-text-with-python)
+        - [4.5.3: Modifying the classifier for real-world conditions](#453-modifying-the-classifier-for-real-world-conditions)
+        - [4.5.4: The bag-of-words document model](#454-the-bag-of-words-document-model)
+      - [4.8: Summary](#48-summary)
 
 # ML Notes
 
@@ -78,7 +84,7 @@ an error rate of 1.0 means the classifier is always wrong.
 ##### 2.2.3: Prepare: normalizing numeric values
 When dealing with values that lie in different ranges, it’s common to normalize them. Common ranges to normalize them to are 0 to 1 or -1 to 1. To scale everything from 0 to 1, you need to apply the following formula:
 
-![newValue = \frac{oldValue-min}{max-min}](https://render.githubusercontent.com/render/math?math=newValue%20%3D%20%5Cfrac%7BoldValue-min%7D%7Bmax-min%7D)
+![\Large newValue = \frac{oldValue-min}{max-min}](https://render.githubusercontent.com/render/math?math=%5CLarge%20newValue%20%3D%20%5Cfrac%7BoldValue-min%7D%7Bmax-min%7D)
 
 ##### 2.2.4: Test: Testing the classifier as a whole
 One common task in machine learning is evaluating an algorithm’s accuracy. One way you can use the existing data is to take some portion, say 90%, to train the classifier. Then you’ll take the remaining 10% to test the classifier and see how accurate it is.
@@ -160,4 +166,52 @@ This overfitting can be removed by pruning the decision tree, combining adjacent
 
 The algorithm we used in this chapter, ID3, is good but not the best. ID3 can’t handle numeric values. We could use continuous values by quantizing them into discrete bins, but ID3 suffers from other problems if we have too many splits
 
+### 4: Naïve Bayes
+Classifying with probability theory. We start out with the simplest probabilistic classifier and then make a few assumptions and learn the naïve Bayes classifier. It’s called naïve because the formulation makes some naïve assumptions. 
 
+> **Naïve Bayes**
+> 
+> **Pros**: Works with a small amount of data, handles  multiple classes
+> 
+> **Cons**: Sensitive to how the input data is prepared
+> 
+> **Works with**: Nominal values
+
+Naïve Bayes is a subset of Bayesian decision theory
+
+That’s Bayesian decision theory in a nutshell: choosing the decision with the highest probability.
+
+![\Large P(gray|bucketB) = \frac{P(gray &nbsp; And &nbsp; bucketB)}{P(bucketB)}](https://render.githubusercontent.com/render/math?math=%5CLarge%20P(gray%7CbucketB)%20%3D%20%5Cfrac%7BP(gray%20%26nbsp%3B%20And%20%26nbsp%3B%20bucketB)%7D%7BP(bucketB)%7D)
+
+![\Large P(c|x) = \frac{P(x|c)}{P(x)}](https://render.githubusercontent.com/render/math?math=%5CLarge%20P(c%7Cx)%20%3D%20%5Cfrac%7BP(x%7Cc)%7D%7BP(x)%7D)
+
+#### 4.4: Document classification with naïve Bayes
+
+*Assumptions in naive bayes:*
+1. Independence among the features, means statistical independence; one feature or word is just as likely by itself as it is next to other words. 
+2. Every feature is equally important. We know that isn’t true either.
+
+*pseudo code: conditional probabilities for each class*
+```python
+for every training document:
+  for each class:
+    if a token appears in the document:
+      increment the count for that token
+    increment the count for tokens
+  for each class:
+    for each token:
+      divide the token count by the total token count to get conditional probabilities
+  return conditional probabilities for each class
+```
+#### 4.5: Classifying text with Python
+
+##### 4.5.3: Modifying the classifier for real-world conditions
+When we attempt to classify a document, we multiply a lot of probabilities together to get the probability that a document belongs to a given class. This will look something like p(w0|1)p(w1|1)p(w2|1). If any of these numbers are 0, then when we multiply them together we get 0. To lessen the impact of this, we’ll initialize all of our occurrence counts to 1, and we’ll initialize the denominators to 2
+
+Another problem is underflow: doing too many multiplications of small numbers. When we go to calculate the product p(w0|ci)p(w1|ci)p(w2|ci)...p(wN|ci) and many of these numbers are very small, we’ll get underflow, or an incorrect answer. (Try to multiply many small numbers in Python. Eventually it rounds off to 0.) One solution to this is to take the natural logarithm of this product. If you recall from algebra, ln(a*b) = ln(a)+ln(b). Doing this allows us to avoid the underflow or round-off error problem.
+
+##### 4.5.4: The bag-of-words document model
+Up until this point we’ve treated the presence or absence of a word as a feature. This could be described as a set-of-words model. If a word appears more than once in a document, that might convey some sort of information about the document over just the word occurring in the document or not. This approach is known as a bag-of-words model. A bag of words can have multiple occurrences of each word, whereas a set of words can have only one occurrence of each word. In bag-of-word, every time it encounters a word, it increments the word vector rather than setting the word vector to 1 for a given index
+
+#### 4.8: Summary
+Using probabilities can sometimes be more effective than using hard rules for classification. Bayesian probability and Bayes’ rule gives us a way to estimate unknown probabilities from known values. You can reduce the need for a lot of data by assuming conditional independence among the features in your data. The assumption we make is that the probability of one word doesn’t depend on any other words in the document. We know this assumption is a little simple. That’s why it’s known as naïve Bayes. Despite its incorrect assumptions, naïve Bayes is effective at classification. There are a number of practical considerations when implementing naïve Bayes in a modern programming language. Underflow is one problem that can be addressed by using the logarithm of probabilities in your calculations. The bag-of-words model is an improvement on the set-of-words model when approaching document classification. There are a number of other improvements, such as removing stop words, and you can spend a long time optimizing a tokenizer.

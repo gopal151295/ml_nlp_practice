@@ -35,6 +35,7 @@ def setOfWords2Vec(vocabList, inputSet):
             print("the word: {} not in vocab".format(word))
     return returnVec
 
+""" increate the vocab counter by 1 for every repeat """
 def bagOfWords2VecMN(vocabList, inputSet):
     returnVec = [0]*len(vocabList)
     for word in inputSet:
@@ -49,16 +50,16 @@ def trainNB0(trainMatrix,trainCategory):
     pAbusive = sum(trainCategory)/float(numTrainDocs)
     p0Num = np.ones(numWords)
     p1Num = np.ones(numWords)
-    p0Denom = 2.0
-    p1Denom = 2.0
+    p0Denom = 2.0 # initialize the probabilities 
+    p1Denom = 2.0 # 
     for i in range(numTrainDocs):
         if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
+            p1Num += trainMatrix[i] #Vector addition
             p1Denom += sum(trainMatrix[i])
         else:
             p0Num += trainMatrix[i]
             p0Denom += sum(trainMatrix[i])
-    p1Vect = np.log(p1Num/p1Denom)
+    p1Vect = np.log(p1Num/p1Denom) # Element wise division
     p0Vect = np.log(p0Num/p0Denom)
     return p0Vect,p1Vect,pAbusive
 
@@ -73,7 +74,6 @@ def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
 def testingNB():
     """ Load dataset """
     listOPosts,listClasses = loadDataSet()
-    
     
     """ Create vocab lit of the loaded dataset """
     myVocabList = createVocabList(listOPosts)
@@ -95,8 +95,6 @@ def testingNB():
     thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
     print (testEntry,'classified as: ',classifyNB(thisDoc,p0V,p1V,pAb))
     
-testingNB()
-
 # Test on real world example
 def textParse(bigString):    #input is big string, #output is word list
     import re
@@ -132,10 +130,8 @@ def spamTest():
             errorCount += 1
             print("classification error", docList[docIndex])
     print('the error rate is: ', float(errorCount)/len(testSet))
-    #return vocabList, fullText
+    # return vocabList, fullText
     
-spamTest()
-
 """  frequent word removal functions """
 def calcMostFreq(vocabList, fullText):
     import operator
@@ -150,7 +146,7 @@ def localWords(feed1, feed0):
     docList = []; classList = []; fullText = []
     minLen = min(len(feed1['entries']), len(feed0['entries']))
     for i in range(minLen):
-        wordList = textParse(feed1['entries'][i]['summary'])
+        wordList = textParse(feed1['entries'][i]['summary']) # access one feed at a time
         docList.append(wordList)
         fullText.extend(wordList)
         classList.append(1) #NY is class 1
@@ -180,18 +176,6 @@ def localWords(feed1, feed0):
     print('the error rate is: ', float(errorCount)/len(testSet))
     return vocabList, p0V, p1V
 
-
-newsUrl= "https://delhi.craigslist.org/search/vnn?format=rss"
-generalUrl="https://delhi.craigslist.org/search/com?format=rss"
-
-""" rss feed parser """
-import feedparser
-
-news=feedparser.parse(newsUrl)
-general=feedparser.parse(generalUrl)
-
-vocabList,pSF,pNY=localWords(news,general)
-
 def getTopWords(ny, sf):
     import operator
     vocabList, p0V, p1V = localWords(ny, sf)
@@ -201,14 +185,12 @@ def getTopWords(ny, sf):
         if p1V[i] > -6.0: topNY.append((vocabList[i], p1V[i]))
     sortedSF = sorted(topSF, key=lambda pair: pair[1], reverse=True)
     print("SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**")
-    for item in sortedSF:
-        print(item[0])
+    # for item in sortedSF:
+    #     print(item[0])
     sortedNY = sorted(topNY, key=lambda pair: pair[1], reverse=True)
     print("NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**")
     for item in sortedNY:
         print(item[0])
-        
-getTopWords(news,general)
 
 
 
