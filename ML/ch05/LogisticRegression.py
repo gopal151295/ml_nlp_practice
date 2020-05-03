@@ -48,13 +48,8 @@ def plotBestFit(weights):
     plt.xlabel('X1'); plt.ylabel('X2')
     plt.show()
 
-""" With gradient ascent 
-dataArr,labelMat=loadDataSet()
-weights = gradAscent(dataArr,labelMat)
-plotBestFit(weights.getA())
-"""
-
 """ Calculate weights gradually by iterating over dataset row """
+""" gives worse results than gradient ascent """
 def stocGradAscent0(dataMatrix, classLabels):
     m, n = np.shape(dataMatrix)
     alpha = 0.01
@@ -64,12 +59,6 @@ def stocGradAscent0(dataMatrix, classLabels):
         error = classLabels[i] - h
         weights = weights + alpha * error * dataMatrix[i]
     return weights
-
-""" with stocGradAscent0 
-dataArr,labelMat=loadDataSet()
-weights = stocGradAscent0(np.array(dataArr),labelMat)
-plotBestFit(weights)
-"""
 
 """ make weights converge more quickly """
 """ Calculate weights gradually by iterating over dataset row -> repeat it for a few time"""
@@ -87,30 +76,11 @@ def stocGradAscent1(dataMatrix, classLabels, numIter=150):
             del(dataIndex[randIndex])
     return weights
 
-""" with stocGradAscent1  """
-dataArr,labelMat=loadDataSet()
-weights = stocGradAscent1(np.array(dataArr),labelMat)
-plotBestFit(weights)
-""" """
-
-""" with different number of iterations
-weights = stocGradAscent1(np.array(dataArr),labelMat, 50)
-plotBestFit(weights)
-
-weights = stocGradAscent1(np.array(dataArr),labelMat,100)
-plotBestFit(weights)
-
-weights = stocGradAscent1(np.array(dataArr),labelMat,200)
-plotBestFit(weights)
-
-weights = stocGradAscent1(np.array(dataArr),labelMat,300)
-plotBestFit(weights)
-
-weights = stocGradAscent1(np.array(dataArr),labelMat,500)
-plotBestFit(weights)
-
 """
-
+This takes the weights and an
+input vector and calculates the sigmoid. If the value of the sigmoid is more than 0.5,
+it’s considered a 1; otherwise, it’s a 0.
+"""
 def classifyVector(inX, weights):
     prob = sigmoid(sum(inX*weights))
     if prob > 0.5: return 1.0
@@ -145,5 +115,3 @@ def multiTest():
     for k in range(numTests):
         errorSum += colicTest()
     print("after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests)))
-
-multiTest()

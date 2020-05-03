@@ -26,6 +26,15 @@
         - [4.5.3: Modifying the classifier for real-world conditions](#453-modifying-the-classifier-for-real-world-conditions)
         - [4.5.4: The bag-of-words document model](#454-the-bag-of-words-document-model)
       - [4.8: Summary](#48-summary)
+    - [5: Logistic regression](#5-logistic-regression)
+      - [5.1: Classification with logistic regression and the sigmoid function](#51-classification-with-logistic-regression-and-the-sigmoid-function)
+      - [5.2: Using optimization to find the best regression coefficients](#52-using-optimization-to-find-the-best-regression-coefficients)
+        - [5.2.1: Gradient Ascent](#521-gradient-ascent)
+        - [5.2.2: Using gradient ascent to find the best parameters](#522-using-gradient-ascent-to-find-the-best-parameters)
+        - [5.2.4: Stochastic gradient ascent](#524-stochastic-gradient-ascent)
+      - [5.3: Estimating horse fatalities from colic](#53-estimating-horse-fatalities-from-colic)
+        - [5.3.1: Dealing with missing values in the data](#531-dealing-with-missing-values-in-the-data)
+      - [5.4: Summary](#54-summary)
 
 # ML Notes
 
@@ -215,3 +224,108 @@ Up until this point we’ve treated the presence or absence of a word as a featu
 
 #### 4.8: Summary
 Using probabilities can sometimes be more effective than using hard rules for classification. Bayesian probability and Bayes’ rule gives us a way to estimate unknown probabilities from known values. You can reduce the need for a lot of data by assuming conditional independence among the features in your data. The assumption we make is that the probability of one word doesn’t depend on any other words in the document. We know this assumption is a little simple. That’s why it’s known as naïve Bayes. Despite its incorrect assumptions, naïve Bayes is effective at classification. There are a number of practical considerations when implementing naïve Bayes in a modern programming language. Underflow is one problem that can be addressed by using the logarithm of probabilities in your calculations. The bag-of-words model is an improvement on the set-of-words model when approaching document classification. There are a number of other improvements, such as removing stop words, and you can spend a long time optimizing a tokenizer.
+
+### 5: Logistic regression
+This is the first chapter where we encounter optimization algorithms. Perhaps you’ve seen some data points and then someone fit a line called the best-fit line to these points; that’s regression.
+
+What happens in logistic regression is we have a bunch of data, and with the data we try to build an equation to do classification for us. 
+
+The regression aspects means that we try to find a best-fit set of parameters. Finding the best fit is similar to regression, and in this method it’s how we train our classifier. We’ll use optimization algorithms to find these best-fit parameters. This best-fit stuff is where the name regression comes from.
+
+In our study of optimization algorithms, you’ll learn gradient ascent, and then we’ll look at a modified version called stochastic gradient ascent. These optimization algorithms will be used to train our classifier.
+
+#### 5.1: Classification with logistic regression and the sigmoid function
+
+> **Logistic regression**
+> 
+> **Pros**: Computationally inexpensive, easy to implement, knowledge representation easy to interpret
+> 
+> **Cons**: Prone to underfitting, may have low accuracy
+> 
+> **Works with**: Numeric values, nominal values
+
+We will use sigmoid function here, it is given by
+
+![\Large \sigma(z) = \frac{1}{1+e^{-z}}](https://render.githubusercontent.com/render/math?math=%5CLarge%20%5Csigma(z)%20%3D%20%5Cfrac%7B1%7D%7B1%2Be%5E%7B-z%7D%7D)
+
+At 0 the value of the sigmoid is 0.5. For increasing values of x, the sigmoid will approach 1, and for decreasing values of x, the sigmoid will approach 0. On a large enough scale (the bottom frame of figure 5.1), the sigmoid looks like a step function.
+
+For the logistic regression classifier we’ll take our features and multiply each one by a weight and then add them up. This result will be put into the sigmoid, and we’ll get a number between 0 and 1. Anything above 0.5 we’ll classify as a 1, and anything below 0.5 we’ll classify as a 0. You can also think of logistic regression as a probability estimate.
+
+#### 5.2: Using optimization to find the best regression coefficients
+
+The input to the sigmoid function described will be z, where z is given by the following:
+
+![\Large z = w_0x_0+w_1x_1+w_2x_2+...+w_nx_n](https://render.githubusercontent.com/render/math?math=%5CLarge%20z%20%3D%20w_0x_0%2Bw_1x_1%2Bw_2x_2%2B...%2Bw_nx_n)
+
+In vector notation we can write this as z=wTx. All that means is that we have two vectors of numbers and we’ll multiply each element and add them up to get one number. The vector x is our input data, and we want to find the best coefficients w.
+
+##### 5.2.1: Gradient Ascent
+
+Gradient ascent is based on the idea that if we want to find the maximum point on a function, then the best way to move is in the direction of the gradient.
+
+![\Large \nabla f(x,y) = \Large \Big ( \frac { \frac {\partial f(x,y)}{\partial x}}{ \frac {\partial f(x,y)}{\partial y}} \Big )](https://render.githubusercontent.com/render/math?math=%5CLarge%20%5Cnabla%20f(x%2Cy)%20%3D%20%5CLarge%20%5CBig%20(%20%5Cfrac%20%7B%20%5Cfrac%20%7B%5Cpartial%20f(x%2Cy)%7D%7B%5Cpartial%20x%7D%7D%7B%20%5Cfrac%20%7B%5Cpartial%20f(x%2Cy)%7D%7B%5Cpartial%20y%7D%7D%20%5CBig%20))
+
+The gradient operator will always point in the direction of the greatest increase. We’ve talked about direction, but I didn’t mention anything to do with magnitude of movement. The magnitude, or step size, we’ll take is given by the parameter.
+
+**Ascent**: We’re trying to maximize some function.
+
+![\Large w = w + \alpha \nabla_wf(w)](https://render.githubusercontent.com/render/math?math=%5CLarge%20w%20%3D%20w%20%2B%20%5Calpha%20%5Cnabla_wf(w))
+
+**Descent** : We’re trying to minimize some function rather than maximize it.
+
+![\Large w = w - \alpha \nabla_wf(w)](https://render.githubusercontent.com/render/math?math=%5CLarge%20w%20%3D%20w%20-%20%5Calpha%20%5Cnabla_wf(w))
+
+Where alpha is the step size of the learning. This step is repeated until we reach a stopping condition: either a specified number of steps or the algorithm is within a certain tolerance margin.
+
+##### 5.2.2: Using gradient ascent to find the best parameters
+
+*pseudo code: for gradient ascent*
+```python
+Start with the weights all set to 1
+for i in range(numOfCycles):
+  calculate the gradient of the entire dataset
+  update the weights vector by alpha*gradient
+  return the weights vector
+```
+
+##### 5.2.4: Stochastic gradient ascent
+
+An alternative to gradient ascent ( computaionally expensive ) algorith is Stochastic gradient ascent. Stochastic gradient ascent is an example of an online learning algorithm. This is known as online because we can incrementally update the classifier as new data comes in rather than all at once. The all-at-once method is known as batch processing.
+
+*pseudo code: for Stochastic gradient ascent*
+```python
+Start with the weights all set to 1
+for data in dataset:
+  calculate the gradient of one piece of data
+  update the weights vector by alpha*gradient
+  return the weights vector
+```
+
+Performance of simple stochastic gradient ascent is even worse than gradient ascent. If you think about what’s happening, it should be obvious that there are pieces of data that don’t classify correctly and cause a large change in the weights. We’d like to see the algorithm converge to a single value rather than oscillate, and we’d like to see the weights converge more quickly.
+
+We'll make some modification in simple stochastic ascent
+
+1. In improved version, alpha changes on each iteration. This will improve the oscillations that occur in the dataset. Alpha decreases as the number of iterations increases, but it never reaches 0 because there’s a constant term.
+2. In improved version, you’re randomly selecting each instance to use in updating the weights. This will reduce the periodic variations that you saw in simple stochastic ascent.
+
+#### 5.3: Estimating horse fatalities from colic
+
+We’ll first handle the problem of how to deal with missing values in a dataset, and then we’ll use logistic regression and stochastic gradient ascent to forecast whether a horse will live or die.
+
+##### 5.3.1: Dealing with missing values in the data
+
+Here are some options:
+1. Use the feature’s mean value from all the available data.
+2. Fill in the unknown with a special value like -1
+3. Ignore the instance
+4. Use a mean value from similar items
+5. Use another machine learning algorithm to predict the value
+
+#### 5.4: Summary 
+
+Logistic regression is finding best-fit parameters to a nonlinear function called the sigmoid. Methods of optimization can be used to find the best-fit parameters. Among the optimization algorithms, one of the most common algorithms is gradient ascent.
+
+Gradient ascent can be simplified with stochastic gradient ascent. Stochastic gradient ascent can do as well as gradient ascent using far fewer computing resources. In addition, stochastic gradient ascent is an online algorithm; it can update what it has learned as new data comes in rather than reloading all of the data as in batch processing.
+
+One major problem in machine learning is how to deal with missing values in the data. There’s no blanket answer to this question. It really depends on what you’re doing with the data. There are a number of solutions, and each solution has its own advantages and disadvantages.
