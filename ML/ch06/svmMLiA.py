@@ -89,8 +89,8 @@ class optStruct:
         self.b = 0
         self.eCache = np.mat(np.zeros((self.m,2))) #first column is valid flag
         self.K = np.mat(np.zeros((self.m,self.m)))
-        # for i in range(self.m):
-        #     self.K[:,i] = kernelTrans(self.X, self.X[i,:], kTup)
+        for i in range(self.m):
+            self.K[:,i] = kernelTrans(self.X, self.X[i,:], kTup)
 
 def calcEk(oS, k):
     fXk = float(np.multiply(oS.alphas,oS.labelMat).T*oS.K[:,k] + oS.b)
@@ -170,3 +170,90 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter,kTup=('lin', 0)):    #full Pl
         elif (alphaPairsChanged == 0): entireSet = True  
         print("iteration number: %d" % iter)
     return oS.b,oS.alphas
+
+def calcWs(alphas,dataArr,classLabels):
+    X = np.mat(dataArr)
+    labelMat = np.mat(classLabels).transpose()
+    m,n = np.shape(X)
+    w = np.zeros((n,1))
+    for i in range(m):
+        w += np.multiply(alphas[i]*labelMat[i],X[i,:].T)
+    return w
+
+def testRbf(k1=1.0):
+    dataArr,labelArr = loadDataSet('data/testSetRBF.txt')
+    b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1)) #C=200 important
+    datMat=np.mat(dataArr)
+    labelMat = np.mat(labelArr).transpose()
+    svInd=np.nonzero(alphas.A>0)[0]
+    sVs=datMat[svInd] #get matrix of only support vectors
+    labelSV = labelMat[svInd];
+    print("there are %d Support Vectors" % np.shape(sVs)[0])
+    m,n = np.shape(datMat)
+    errorCount = 0
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1))
+        predict=kernelEval.T * np.multiply(labelSV,alphas[svInd]) + b
+        if np.sign(predict)!=np.sign(labelArr[i]): errorCount += 1
+    print("the training error rate is: %f" % (float(errorCount)/m))
+    dataArr,labelArr = loadDataSet('data/testSetRBF2.txt')
+    errorCount = 0
+    datMat=np.mat(dataArr)
+    labelMat = np.mat(labelArr).transpose()
+    m,n = np.shape(datMat)
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1))
+        predict=kernelEval.T * np.multiply(labelSV,alphas[svInd]) + b
+        if np.sign(predict)!=np.sign(labelArr[i]): errorCount += 1    
+    print("the test error rate is: %f" % (float(errorCount)/m))    
+
+def img2vector(filename):
+    returnVect = np.zeros((1,1024))
+    fr = open(filename)
+    for i in range(32):
+        lineStr = fr.readline()
+        for j in range(32):
+            returnVect[0,32*i+j] = int(lineStr[j])
+    return returnVect
+
+def loadImages(dirName):
+    from os import listdir
+    hwLabels = []
+    trainingFileList = listdir(dirName)           #load the training set
+    m = len(trainingFileList)
+    trainingMat = np.zeros((m,1024))
+    for i in range(m):
+        fileNameStr = trainingFileList[i]
+        fileStr = fileNameStr.split('.')[0]     #take off .txt
+        classNumStr = int(fileStr.split('_')[0])
+        if classNumStr == 9: hwLabels.append(-1)
+        else: hwLabels.append(1)
+        trainingMat[i,:] = img2vector('%s/%s' % (dirName, fileNameStr))
+    return trainingMat, hwLabels 
+
+def testDigits(kTup=('rbf', 10)):
+    dataArr,labelArr = loadImages('data/trainingDigits')
+    b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, kTup)
+    datMat=np.mat(dataArr)
+    labelMat = np.mat(labelArr).transpose()
+    svInd=np.nonzero(alphas.A>0)[0]
+    sVs=datMat[svInd] 
+    labelSV = labelMat[svInd];
+    print("there are %d Support Vectors" % np.shape(sVs)[0])
+    m,n = np.shape(datMat)
+    errorCount = 0
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],kTup)
+        predict=kernelEval.T * np.multiply(labelSV,alphas[svInd]) + b
+        if np.sign(predict)!=np.sign(labelArr[i]): errorCount += 1
+    print("the training error rate is: %f" % (float(errorCount)/m))
+    dataArr,labelArr = loadImages('data/testDigits')
+    errorCount = 0
+    datMat=np.mat(dataArr)
+    labelMat = np.mat(labelArr).transpose()
+    m,n = np.shape(datMat)
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],kTup)
+        predict=kernelEval.T * np.multiply(labelSV,alphas[svInd]) + b
+        if np.sign(predict)!=np.sign(labelArr[i]): errorCount += 1    
+    print("the test error rate is: %f" % (float(errorCount)/m)) 

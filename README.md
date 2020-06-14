@@ -20,8 +20,8 @@
       - [3.3: Testing and storing the classifier](#33-testing-and-storing-the-classifier)
         - [3.3.2: Persisting the decision tree](#332-persisting-the-decision-tree)
       - [3.5: Summary](#35-summary)
-    - [4: Naïve Bayes](#4-na%c3%afve-bayes)
-      - [4.4: Document classification with naïve Bayes](#44-document-classification-with-na%c3%afve-bayes)
+    - [4: Naïve Bayes](#4-naïve-bayes)
+      - [4.4: Document classification with naïve Bayes](#44-document-classification-with-naïve-bayes)
       - [4.5: Classifying text with Python](#45-classifying-text-with-python)
         - [4.5.3: Modifying the classifier for real-world conditions](#453-modifying-the-classifier-for-real-world-conditions)
         - [4.5.4: The bag-of-words document model](#454-the-bag-of-words-document-model)
@@ -42,6 +42,12 @@
         - [6.3.1: Platt’s SMO algorithm](#631-platts-smo-algorithm)
         - [6.3.2: Solving small datasets with the simplified SMO](#632-solving-small-datasets-with-the-simplified-smo)
       - [6.4: Speeding up optimization with the full Platt SMO](#64-speeding-up-optimization-with-the-full-platt-smo)
+      - [6.5 Using kernels for more complex data](#65-using-kernels-for-more-complex-data)
+        - [6.5.1 Mapping data to higher dimensions with kernels](#651-mapping-data-to-higher-dimensions-with-kernels)
+        - [6.5.2 The radial bias function as a kernel](#652-the-radial-bias-function-as-a-kernel)
+        - [6.5.3 Using a kernel for testing](#653-using-a-kernel-for-testing)
+      - [6.6 Example: revisiting handwriting classification](#66-example-revisiting-handwriting-classification)
+      - [6.7 Summary](#67-summary)
 
 # ML Notes
 
@@ -384,6 +390,28 @@ will give us a large number. If it’s far from the negative side and has a nega
 will also give us a large positive number.
 
 #### 6.3: Efficient optimization with the SMO algorithm
+The iterative algorithm Sequential Minimal Optimization (SMO) is used for solving quadratic programming (QP) problems. One example where QP problems are relevant is during the training process of support vector machines (SVM). The SMO algorithm is used to solve in this example a constraint optimization problem. The goal of the SMO algorithm is to return the alphas that satisfy the constraint optimization problem below. 
+
+1. Sequential
+   1. Not parallel
+   2. Optimize in sets of 2 Lagrange multipliers
+2. Minimal
+   1. Optimize smallest possible sub-problem at each step
+3. Optimize
+   1. Satisfy the constrains for the chosen pair of Lagrange multipliers
+
+At each step SMO chooses two elements αi and αj to jointly
+optimize, find the optimal values for those two parameters
+given that all the others are fixed, and updates the α vector
+accordingly.
+
+The choice of the two points is determined by a heuristic,
+while the optimization of the two multipliers is performed
+analytically
+
+Despite needing more iterations to converge, each iteration
+uses so few operations that the algorithm exhibits an overall
+speed-up of some orders of magnitude.
 
 ##### 6.3.1: Platt’s SMO algorithm
 
@@ -397,6 +425,7 @@ The simplification uses less code but takes longer at runtime. The outer loops o
 
 *pseudo code: for for our first version of the SMO algorithm*
 ```python
+
 create an alphas vector filled with 0s
 while the number of iterations is less than MaxIterations:
   for every data vector in the dataset:
@@ -410,3 +439,57 @@ while the number of iterations is less than MaxIterations:
 #### 6.4: Speeding up optimization with the full Platt SMO
 
 The optimization portion where we change alphas and do all the algebra stays the same. The only difference is how we select which alpha to use in the optimization. 
+
+The Platt SMO algorithm has an outer loop for choosing the first alpha. This alternates between single passes over the entire dataset and single passes over non-bound alphas. The non-bound alphas are alphas that aren’t bound at the limits 0 or C. The pass over the entire dataset is easy, and to loop over the non-bound alphas we’ll first create a list of these alphas and then loop over the list This step skips alphas that we know can’t change.
+
+The second alpha is chosen using an inner loop after we’ve selected the first alpha. This alpha is chosen in a way that will maximize the step size during optimization.
+
+#### 6.5 Using kernels for more complex data
+
+We’re going to use something called a kernel to transform our data into a form that’s easily understood by our classifier.
+
+##### 6.5.1 Mapping data to higher dimensions with kernels
+
+The human brain can recognize that. Our classifier, on the other hand, can only recognize greater than or less than 0. If we just plugged in our X and Y coordinates, we wouldn’t get good results. You can probably think of some ways to change the circle data so that instead of X and Y, you’d have some new variables that would be better on the greater-than- or less-than-0 test. This is an example of transforming the data from one feature space to another so that you can deal with it easily with your existing tools. Mathematicians like to call this mapping from one feature space to another feature space. Usually, this mapping goes from a lowerdimensional feature space to a higher-dimensional space.
+
+This mapping from one feature space to another is done by a kernel. You can think of the kernel as a wrapper or interface for the data to translate it from a difficult formatting to an easier formatting. If this mapping from a feature space to another feature,
+
+One great thing about the SVM optimization is that all operations can be written in terms of inner products. Inner products are two vectors multiplied together to yield a scalar or single number. We can replace the inner products with our kernel functions without making simplifications. Replacing the inner product with a kernel is known as the ***kernel trick*** or ***kernel substation***.
+
+##### 6.5.2 The radial bias function as a kernel
+
+The ***radial bias function***  is a kernel that’s often used with support vector machines. A radial bias function is a function that takes a vector and outputs a scalar based on the vector’s distance. This distance can be either from 0,0 or from another vector.
+
+We'll use the Gaussian version which can be written as:
+
+![k(x,y) = \Huge e^\frac{-\|x-y\|^2}{2\sigma^2}](https://render.githubusercontent.com/render/math?math=k(x%2Cy)%20%3D%20%5CHuge%20e%5E%5Cfrac%7B-%5C%7Cx-y%5C%7C%5E2%7D%7B2%5Csigma%5E2%7D)
+
+
+where σ is a user-defined parameter that determines the “reach,” or how quickly this
+falls off to 0
+
+This Gaussian version maps the data from its feature space to a higher feature space, infinite dimensional to be specific
+
+In the case of the linear kernel, a dot product is taken between the two inputs, which are the full dataset and a row of the dataset. In the case of the radial bias function, the Gaussian function is evaluated for every element in the matrix in the for loop. After the for loop is finished, you apply the calculations over the entire vector
+
+##### 6.5.3 Using a kernel for testing
+
+There is an optimum number of support vectors. The beauty of SVMs is that they classify things efficiently. If you have too few support vectors, you may have a poor decision boundary (this will be demonstrated in the next example). If you have too many support vectors, you’re using the whole dataset every time you classify something—that’s called k-Nearest Neighbors.
+
+#### 6.6 Example: revisiting handwriting classification
+
+Actually, support vector machines are only a binary classifier. They can only choose between +1 and -1. Creating a multiclass classifier with SVMs has been studied and compared.
+
+It’s interesting to note that the minimum training error doesn’t correspond to a minimum number of support vectors. Also note that the linear kernel doesn’t have terrible performance. It may be acceptable to trade the linear kernel’s error rate for increased speed of classification, but that depends on your application.
+
+#### 6.7 Summary
+
+Support vector machines are a type of classifier. They’re called machines because they generate a binary decision; they’re decision machines. Support vectors have good generalization error: they do a good job of learning and generalizing on what they’ve learned. These benefits have made support vector machines popular, and they’re considered by some to be the best stock algorithm in unsupervised learning.
+
+Support vector machines try to maximize margin by solving a quadratic optimization problem. In the past, complex, slow quadratic solvers were used to train support vector machines. John Platt introduced the SMO algorithm, which allowed fast training of SVMs by optimizing only two alphas at one time. We discussed the SMO optimization procedure first in a simplified version. We sped up the SMO algorithm a lot by using the full Platt version over the simplified version. There are many further improvements that you could make to speed it up even further.
+
+Kernel methods, or the kernel trick, map data (sometimes nonlinear data) from a low-dimensional space to a high-dimensional space. In a higher dimension, you can solve a linear problem that’s nonlinear in lower-dimensional space. Kernel methods can be used in other algorithms than just SVM. The radial-bias function is a popular kernel that measures the distance between two vectors.
+
+Support vector machines are a binary classifier and additional methods can be extended to classification of classes greater than two. The performance of an SVM is also sensitive to optimization parameters and parameters of the kernel used.
+
+

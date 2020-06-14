@@ -34,3 +34,13 @@ output:
 
 """ optimised SMOP """
 b,alphas = SVM.smoP(dataArr, labelArr, 0.6, 0.001, 40)
+
+""" get alpha for supporting vectors """
+ws=SVM.calcWs(alphas,dataArr,labelArr)
+
+""" test rbf kernel """
+SVM.testRbf()
+
+""" testdigits classification using rbf kernel """
+SVM.testDigits(('rbf', 20))
+
