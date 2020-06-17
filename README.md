@@ -48,6 +48,12 @@
         - [6.5.3 Using a kernel for testing](#653-using-a-kernel-for-testing)
       - [6.6 Example: revisiting handwriting classification](#66-example-revisiting-handwriting-classification)
       - [6.7 Summary](#67-summary)
+    - [7: Improving classification with the AdaBoost meta-algorithm](#7-improving-classification-with-the-adaboost-meta-algorithm)
+      - [7.1: Classifiers using multiple samples of the dataset](#71-classifiers-using-multiple-samples-of-the-dataset)
+        - [7.1.1: Building classifiers from randomly resampled data: bagging](#711-building-classifiers-from-randomly-resampled-data-bagging)
+        - [7.1.2: Boosting](#712-boosting)
+      - [7.2: Train: improving the classifier by focusing on errors](#72-train-improving-the-classifier-by-focusing-on-errors)
+      - [7.3.: Creating a weak learner with a decision stump](#73-creating-a-weak-learner-with-a-decision-stump)
 
 # ML Notes
 
@@ -492,4 +498,58 @@ Kernel methods, or the kernel trick, map data (sometimes nonlinear data) from a 
 
 Support vector machines are a binary classifier and additional methods can be extended to classification of classes greater than two. The performance of an SVM is also sensitive to optimization parameters and parameters of the kernel used.
 
+### 7: Improving classification with the AdaBoost meta-algorithm
 
+If you were going to make an important decision, you’d probably get the advice of multiple experts instead of trusting one person. Why should the problems you solve with machine learning be any different? This is the idea behind a metaalgorithm. Meta-algorithms are a way of combining other algorithms. We’ll focus on one of the most popular meta-algorithms called AdaBoost.
+
+Before we leave the subject of classification, we’re going to talk about a general problem for all classifiers: classification imbalance. This occurs when we’re trying to classify items but don’t have an equal number of examples. Detecting fraudulent credit card use is a good example of this
+
+#### 7.1: Classifiers using multiple samples of the dataset
+
+> **AdaBoost**
+> 
+> **Pros**:  Low generalization error, easy to code, works with most classifiers, no parameters to adjust
+> 
+> **Cons**: Sensitive to outliers
+> 
+> **Works with**:  Numeric values, nominal values
+
+You’ve seen five different algorithms for classification. These algorithms have individual strengths and weaknesses. One idea that naturally arises is combining multiple classifiers. Methods that do this are known as ensemble methods or meta-algorithms. Ensemble methods can take the form of using different algorithms, using the same algorithm with different settings, or assigning different parts of the dataset to different classifiers.
+
+##### 7.1.1: Building classifiers from randomly resampled data: bagging
+
+Bootstrap aggregating, which is known as bagging, is a technique where the data is taken from the original dataset S times to make S new datasets. The datasets are the same size as the original. Each dataset is built by randomly selecting an example from the original with replacement. By “with replacement” I mean that you can select the same example more than once. This property allows you to have values in the new dataset that are repeated, and some values from the original won’t be present in the new set.
+
+After the S datasets are built, a learning algorithm is applied to each one individually. When you’d like to classify a new piece of data, you’d apply our S classifiers to the new piece of data and take a majority vote.
+
+There are more advanced methods of bagging, such as random forests. 
+
+##### 7.1.2: Boosting
+
+Boosting is a technique similar to bagging. In bagging, you always use the same type of classifier. But in boosting, the different classifiers are trained sequentially. Each new classifier is trained based on the performance of those already trained. Boosting makes new classifiers focus on data that was previously misclassified by previous classifiers.
+
+Boosting is different from bagging because the output is calculated from a weighted sum of all classifiers. The weights aren’t equal as in bagging but are based on how successful the classifier was in the previous iteration.
+
+#### 7.2: Train: improving the classifier by focusing on errors
+
+AdaBoost is short for adaptive boosting. AdaBoost works this way: A weight is applied to every example in the training data. We’ll call the weight vector D. Initially, these weights are all equal. A weak classifier is first trained on the training data. The errors from the weak classifier are calculated, and the weak classifier is trained a second time with the same dataset. This second time the weak classifier is trained, the weights of the training set are adjusted so the examples properly classified the first time are weighted less and the examples incorrectly classified in the first iteration are weighted more. To get one answer from all of these weak classifiers, AdaBoost assigns α values to each of the classifiers. The α values are based on the error of each weak classifier. The error ϵ is given by
+
+![\epsilon = \large \frac {number \hspace{1mm} of \hspace{1mm} Incorrectly \hspace{1mm} classified \hspace{1mm} examples}{total \hspace{1mm} number \hspace{1mm} of \hspace{1mm} examples}](https://render.githubusercontent.com/render/math?math=%5Cepsilon%20%3D%20%5Clarge%20%5Cfrac%20%7Bnumber%20%5Chspace%7B1mm%7D%20of%20%5Chspace%7B1mm%7D%20Incorrectly%20%5Chspace%7B1mm%7D%20classified%20%5Chspace%7B1mm%7D%20examples%7D%7Btotal%20%5Chspace%7B1mm%7D%20number%20%5Chspace%7B1mm%7D%20of%20%5Chspace%7B1mm%7D%20examples%7D)
+
+α is given by
+
+![\alpha = \Large \frac {1} {2} \ln( \frac {1 - \epsilon }{ \epsilon } )](https://render.githubusercontent.com/render/math?math=%5Calpha%20%3D%20%5CLarge%20%5Cfrac%20%7B1%7D%20%7B2%7D%20%5Cln(%20%5Cfrac%20%7B1%20-%20%5Cepsilon%20%7D%7B%20%5Cepsilon%20%7D%20))
+
+After you calculate α, you can update the weight vector D so that the examples that are correctly classified will decrease in weight and the misclassified examples will  increase in weight. D is given by
+
+![D_i^{t+1} = \Large \frac { D_i^{t}e^{-\alpha}}{Sum(D)}](https://render.githubusercontent.com/render/math?math=D_i%5E%7Bt%2B1%7D%20%3D%20%5CLarge%20%5Cfrac%20%7B%20D_i%5E%7Bt%7De%5E%7B-%5Calpha%7D%7D%7BSum(D)%7D)
+
+if correctly predicted and
+
+![D_i^{t+1} = \Large \frac { D_i^{t}e^{\alpha}}{Sum(D)}](https://render.githubusercontent.com/render/math?math=D_i%5E%7Bt%2B1%7D%20%3D%20%5CLarge%20%5Cfrac%20%7B%20D_i%5E%7Bt%7De%5E%7B%5Calpha%7D%7D%7BSum(D)%7D)
+
+After D is calculated, AdaBoost starts on the next iteration. The AdaBoost algorithm repeats the training and weight-adjusting iterations until the training error is 0 or until the number of weak classifiers reaches a user-defined value.
+
+#### 7.3.: Creating a weak learner with a decision stump
+
+A *decision stump* is a simple decision tree. You saw how decision trees work earlier. Now, we’re going to make a decision stump that makes a decision on one feature only. It’s a tree with only one split, so it’s a stump.
